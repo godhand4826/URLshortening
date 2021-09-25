@@ -1,0 +1,14 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended"],
+  "jsRules": {},
+  "rules": {
+    "no-console": {
+      "severity": "warning"
+    }
+  },
+  "linterOptions": {
+    "exclude": ["src/migration/*"]
+  },
+  "rulesDirectory": []
+}
