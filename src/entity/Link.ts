@@ -1,5 +1,5 @@
-import { User } from './User'
 import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm'
+import { User } from '.'
 
 @Entity()
 export class Link extends BaseEntity {
@@ -9,7 +9,7 @@ export class Link extends BaseEntity {
 	@Column("varchar")
 	origin: string;
 
-	@Column("varchar")
+	@Column({ type: "varchar", unique: true })
 	shorten: string;
 
 	@ManyToOne(() => User, user => user.links)
