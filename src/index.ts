@@ -9,7 +9,7 @@ import logger from './logger'
 import usecases from './usecases'
 
 const app = express()
-app.use(cors())
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }))
 app.use(express.json())
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]', {
 	immediate: true,
@@ -27,8 +27,7 @@ const RedisStore = connectRedis(session)
 app.use(session({
 	store: new RedisStore({ client: redis.createClient() }),
 	secret: 'keyboard cat',
-	cookie: { httpOnly: true, signed: true, maxAge: 300000 },
-	proxy: true,
+	cookie: { secure: false, httpOnly: true, signed: true, maxAge: 5 * 60 * 1000 },
 	resave: false,
 	saveUninitialized: true,
 }))
@@ -39,6 +38,7 @@ app.post("/register", (req, res) => {
 			const user = await usecases.userUC.createUser(name, password)
 			user.password = ""
 			logger.info(user)
+			req.session.user = user
 			res.json(user)
 		} catch (error) {
 			res.status(401).json({ error })
@@ -50,8 +50,9 @@ app.post("/login", (req, res) => {
 		try {
 			const { name, password } = req.body
 			const user = await usecases.userUC.login(name, password)
-			req.session.user = user
 			user!.password = ""
+			logger.info(user)
+			req.session.user = user
 			res.json(user)
 		} catch (error) {
 			res.status(401).json({ error })
