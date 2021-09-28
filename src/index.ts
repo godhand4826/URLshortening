@@ -1,11 +1,16 @@
 import express from 'express'
 import morgan from 'morgan'
+import cors from 'cors'
 import redis from 'redis'
 import session from 'express-session'
 import connectRedis from 'connect-redis'
+import { createConnection } from 'typeorm'
 import logger from './logger'
+import usecases from './usecases'
 
 const app = express()
+app.use(cors())
+app.use(express.json())
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]', {
 	immediate: true,
 	stream: {
@@ -22,10 +27,49 @@ const RedisStore = connectRedis(session)
 app.use(session({
 	store: new RedisStore({ client: redis.createClient() }),
 	secret: 'keyboard cat',
-	cookie: { httpOnly: true, signed: true, maxAge: 3000 },
+	cookie: { httpOnly: true, signed: true, maxAge: 300000 },
+	proxy: true,
 	resave: false,
-	saveUninitialized: false,
+	saveUninitialized: true,
 }))
+app.post("/register", (req, res) => {
+	(async () => {
+		try {
+			const { name, password } = req.body
+			const user = await usecases.userUC.createUser(name, password)
+			user.password = ""
+			logger.info(user)
+			res.json(user)
+		} catch (error) {
+			res.status(401).json({ error })
+		}
+	})()
+})
+app.post("/login", (req, res) => {
+	(async () => {
+		try {
+			const { name, password } = req.body
+			const user = await usecases.userUC.login(name, password)
+			req.session.user = user
+			user!.password = ""
+			res.json(user)
+		} catch (error) {
+			res.status(401).json({ error })
+		}
+	})()
+})
+app.post("/logout", (req, res) => {
+	req.session.user = undefined
+	res.json({ ok: true })
+})
+app.get("/me", (req, res) => {
+	if (req.session.user) {
+		res.json({ user: req.session.user })
+	} else {
+		res.status(401).json({})
+	}
+})
+
 app.get("/", (req, res) => {
 	if (req.session.cnt) {
 		req.session.cnt += 1
@@ -36,6 +80,12 @@ app.get("/", (req, res) => {
 	res.status(200).json({ cnt: req.session.cnt })
 })
 
-app.listen(9999, () => {
-	logger.info(`listening on ${9999}`)
-})
+async function main() {
+	await createConnection()
+	app.listen(9999, () => {
+		logger.info(`listening on ${9999}`)
+	})
+}
+
+main()
+

@@ -6,7 +6,7 @@ export class User extends BaseEntity {
 	@PrimaryGeneratedColumn()
 	id: number;
 
-	@Column("varchar")
+	@Column({ type: "varchar", unique: true })
 	name: string;
 
 	@Column("varchar")
