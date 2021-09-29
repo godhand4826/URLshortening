@@ -41,6 +41,7 @@ app.post("/register", (req, res) => {
 			req.session.user = user
 			res.json(user)
 		} catch (error) {
+			logger.error(error)
 			res.status(401).json({ error })
 		}
 	})()
@@ -55,6 +56,7 @@ app.post("/login", (req, res) => {
 			req.session.user = user
 			res.json(user)
 		} catch (error) {
+			logger.error(error)
 			res.status(401).json({ error })
 		}
 	})()
@@ -69,6 +71,33 @@ app.get("/me", (req, res) => {
 	} else {
 		res.status(401).json({})
 	}
+})
+
+app.get("/link", (req, res) => {
+	(async () => {
+		try {
+			const links = await usecases.linkUC.getLinks(req.session.user!)
+			logger.info(links)
+			res.json(links)
+		} catch (error) {
+			logger.error(error)
+			res.status(401).json({ error })
+		}
+	})()
+})
+
+app.post("/link", (req, res) => {
+	(async () => {
+		try {
+			const { url } = req.body
+			const link = await usecases.linkUC.createLink(req.session.user!, url)
+			logger.info(link)
+			res.json(link)
+		} catch (error) {
+			logger.error(error)
+			res.status(401).json({ error })
+		}
+	})()
 })
 
 app.get("/", (req, res) => {

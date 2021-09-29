@@ -1,8 +1,10 @@
-import LinkUC from './link'
-import { User } from '../entity'
+import LinkUC, { random } from './link'
+import { Link, User } from '../entity'
 import LinkRepo from '../repo/memory/linkRepo'
 
 const origin = "https://www.google.com/"
+const origin2 = "https://tw.yahoo.com/"
+const origin3 = "https://www.youtube.com/"
 
 test('create a link', async () => {
 	const repo = new LinkRepo()
@@ -33,4 +35,22 @@ test('redirect not found', async () => {
 	await expect(async () => await linkUC.redirect("not/exist/shorten"))
 		.rejects
 		.toThrow()
+})
+
+test('get links', async () => {
+	const linkUC = new LinkUC(new LinkRepo())
+	const user = new User()
+	user.id = 10
+	await linkUC.createLink(user, origin)
+	await linkUC.createLink(user, origin2)
+	await linkUC.createLink(user, origin3)
+	const links = await linkUC.getLinks(user)
+	expect(links.find(link => link.origin === "foo")).toBeUndefined()
+	expect(links.find(link => link.origin === origin)).not.toBeUndefined()
+	expect(links.find(link => link.origin === origin2)).not.toBeUndefined()
+	expect(links.find(link => link.origin === origin3)).not.toBeUndefined()
+})
+
+test('test random function', () => {
+	expect(new Set(Array(10).fill(null).map(() => random())).size).toEqual(10)
 })
