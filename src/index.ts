@@ -100,6 +100,18 @@ app.post("/link", (req, res) => {
 	})()
 })
 
+app.get("/r/:shorten", (req, res) => {
+	(async () => {
+		try {
+			const url = await usecases.linkUC.redirect(req.params.shorten)
+			res.redirect(url)
+		} catch (error) {
+			logger.error(error)
+			res.status(404).json({ error })
+		}
+	})()
+})
+
 app.get("/", (req, res) => {
 	if (req.session.cnt) {
 		req.session.cnt += 1
